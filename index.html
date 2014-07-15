@@ -56,6 +56,26 @@ SOFTWARE.
             margin: 15px 15px;
         }
         
+        a:link.menubutton 
+        {
+            text-decoration: none;
+        }
+        
+        a:visited.menubutton 
+        {
+            text-decoration: none;
+        }
+        
+        a:hover.menubutton 
+        {
+            text-decoration: underline;
+        }
+        
+        a:active.menubutton 
+        {
+            text-decoration: underline;
+        }
+        
         h1
         {
             text-align: center;
@@ -153,9 +173,69 @@ SOFTWARE.
             -moz-box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 1px 2px rgba(0, 0, 0, 0.05);
             box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 1px 2px rgba(0, 0, 0, 0.05);
         }
+        
+        .error 
+        {
+            color: #ffffff;
+            text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.25);
+            background-color: #bc2827;
+            background-image: -moz-linear-gradient(top, #dc3030, #a02020);
+            background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#cc8800), to(#a02020));
+            background-image: -webkit-linear-gradient(top, #dc3030, #a02020);
+            background-image: -o-linear-gradient(top, #dc3030, #102020);
+            background-image: linear-gradient(to bottom, #dc3030, #a02020);
+            background-repeat: repeat-x;
+            border: 1px solid;
+            border-color: #a02020 #dc3030;
+            border-color: rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.25);
+            filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ffdc3030', endColorstr='#ffa02020', GradientType=0);
+            filter: progid:DXImageTransform.Microsoft.gradient(enabled=false);
+            padding: 4px 12px;
+            margin: 0px 0px 1em 0px;
+            font-size: 14px;
+            line-height: 20px;
+            cursor: pointer;
+            vertical-align: middle;
+            -webkit-border-radius: 4px;
+            -moz-border-radius: 4px;
+            border-radius: 4px;
+            -webkit-box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 1px 2px rgba(0, 0, 0, 0.05);
+            -moz-box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 1px 2px rgba(0, 0, 0, 0.05);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 1px 2px rgba(0, 0, 0, 0.05);
+        }
+        
+        .result
+        {
+            color: #ffffff;
+            text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.25);
+            background-color: #4ea780;
+            background-image: -moz-linear-gradient(top, #5cc35f, #408d62);
+            background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#5cc35f), to(#408d62));
+            background-image: -webkit-linear-gradient(top, #5cc35f, #408d62);
+            background-image: -o-linear-gradient(top, #5cc35f, #408d62);
+            background-image: linear-gradient(to bottom, #5cc35f, #408d62);
+            background-repeat: repeat-x;
+            border: 1px solid;
+            border-color: #408d62 #5cc35f;
+            border-color: rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.25);
+            filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff5cc35f', endColorstr='#ff408d62', GradientType=0);
+            filter: progid:DXImageTransform.Microsoft.gradient(enabled=false);
+            padding: 4px 12px;
+            margin: 0.5em 0px 0.5em 0px;
+            cursor: pointer;
+            vertical-align: middle;
+            -webkit-border-radius: 4px;
+            -moz-border-radius: 4px;
+            border-radius: 4px;
+            -webkit-box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 1px 2px rgba(0, 0, 0, 0.05);
+            -moz-box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 1px 2px rgba(0, 0, 0, 0.05);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 1px 2px rgba(0, 0, 0, 0.05);
+            font-family: monospace;
+            font-weight: bold;
+        }
+        
     </style>
     <script type="text/javascript">
-
     ///////////////////////////////////// Galois Field Functions ///////////////////////////////////////
     // We use the Rijndael (AES) finite field, GF(2^8) with reducing polynomial x^8 + x^4 + x^3 + x + 1.
     // These log and anti-log tables are derived from http://www.samiam.org/logtables.txt with a
@@ -217,7 +297,7 @@ SOFTWARE.
 
     function gf_div(a, b) {
         if (b == 0)
-            throw "Cannot divide by zero";
+            throw "Cannot divide by zero -- duplicate shards?";
 
         var diff = gf_log_tbl[a] - gf_log_tbl[b];
         if (diff < 0)
@@ -404,6 +484,17 @@ SOFTWARE.
     }
 
     /////////////////////////////////// User Interface Functions ///////////////////////////////////
+    function alert(str) {
+        var errordiv = document.getElementById('errormsg');
+        errordiv.innerHTML = str;
+        errordiv.style.display = 'block';
+    }
+
+    function clearError() {
+        var errordiv = document.getElementById('errormsg');
+        errordiv.style.display = 'none';
+    }
+
     function hideChildrenOf(id) {
         var children = document.getElementById(id).childNodes;
         for (var i = 0; i < children.length; i++) {
@@ -420,6 +511,7 @@ SOFTWARE.
     function shardTypeSelected() {
         var type = document.getElementById("shardtype").value;
         hideChildrenOf("shardinputs");
+        clearError();
         if (type == 'hex') {
             document.getElementById("shardhexinput").style.display = 'block';
             document.getElementById("key").value = '';
@@ -497,6 +589,15 @@ SOFTWARE.
         URL.revokeObjectURL(url);
     }
 
+    function outputBitlockerShards(outputDiv, shards)
+    {
+        for (var i = 0; i < shards.length; i++) {
+            var key = byteArrayToBitlockerKey(shards[i], i + 1);
+
+            outputDiv.innerHTML += "<div class='result'>" + key.substr(0, 27) + "<br />" +
+                key.substr(28, 27) + "</div>";
+        }
+    }
     function shardGeneratedKey(key)
     {
         var outputDiv = document.getElementById("shardoutput");
@@ -504,10 +605,7 @@ SOFTWARE.
         var threshold = document.getElementById("threshold").value;
 
         var shards = computeShards(new Uint8Array(key), threshold, numShards);
-
-        for (var i = 0; i < shards.length; i++) {
-            outputDiv.innerHTML += byteArrayToBitlockerKey(shards[i], i + 1) + "<br />";
-        }
+        outputBitlockerShards(outputDiv, shards);
     }
 
     function shardFileKeygenDone(key) {
@@ -520,72 +618,74 @@ SOFTWARE.
         exportOp.then(shardGeneratedKey);
     }
 
-    function shardRSAKeygenDone(key) {
-        var exportOp = window.crypto.subtle.exportKey("pkcs8", key.privateKey);
-        exportOp.then(shardGeneratedKey);
-    }
-
-    function shardECDSAKeygenDone(key) {
-        var exportOp = window.crypto.subtle.exportKey("pkcs8", key.privateKey);
-        exportOp.then(shardGeneratedKey);
+    function validateBLKG(id) {
+        var inputElement = document.getElementById("blkey" + id);
+        if (inputElement.value.length == 6) {
+            if (!validateBitlockerGroup(inputElement.value)) {
+                inputElement.style.color = '#ff0000';
+            } else {
+                inputElement.style.color = '#000000';
+            }
+        }
     }
 
     function shard() {
-        var outputDiv = document.getElementById("shardoutput");
-        outputDiv.style.display = 'block';
-        outputDiv.innerHTML = '';
+        try {
+            var outputDiv = document.getElementById("shardoutput");
+            outputDiv.style.display = 'block';
+            outputDiv.innerHTML = '';
+            clearError();
 
-        var key;
-        var type = document.getElementById("shardtype").value;
-        if (type == 'hex') {
-            key = parseHexString(document.getElementById("key").value);
-        } else if (type == 'bitlocker') {
-            key = document.getElementById("blkey1").value;
-            key += document.getElementById("blkey2").value;
-            key += document.getElementById("blkey3").value;
-            key += document.getElementById("blkey4").value;
-            key += document.getElementById("blkey5").value;
-            key += document.getElementById("blkey6").value;
-            key += document.getElementById("blkey7").value;
-            key += document.getElementById("blkey8").value;
-            key = parseBitlockerKey(key);
-        } else if (type == 'file') {
-            var keyGenOp = window.crypto.subtle.generateKey(
-                { name: 'AES-GCM', length: 128 }, true,
-                ["encrypt", "decrypt"]);
-            keyGenOp.then(shardFileKeygenDone);
-            return;
-        } else if (type == 'rsa') {
-            var keyGenOp = window.crypto.subtle.generateKey(
-                { name: 'RSASSA-PKCS1-v1_5', modulusLength: 2048,
-                    hash: { name: 'SHA-256' },
-                    publicExponent: parseHexString('010001')
-                }, true, ["sign", "verify"]);
-            keyGenOp.then(shardRSAKeygenDone);
-            return;
-        } else if (type == 'ecdsa') {
-            var keyGenOp = window.crypto.subtle.generateKey(
-                { name: 'ECDSA', namedCurve: 'P-256' }, 
-                true, ["sign", "verify"]);
-            keyGenOp.then(shardECDSAKeygenDone);
-            return;
-        }
-        var numShards = document.getElementById("shards").value;
-        var threshold = document.getElementById("threshold").value;
-        var shards = computeShards(key, threshold, numShards);
-
-        if (type == 'hex') {
-            for (var i = 0; i < shards.length; i++) {
-                var id = i + 1;
-                if (id < 10) {
-                    id = '0' + id;
+            var key;
+            var type = document.getElementById("shardtype").value;
+            if (type == 'hex') {
+                key = parseHexString(document.getElementById("key").value);
+            } else if (type == 'bitlocker') {
+                key = document.getElementById("blkey1").value;
+                key += document.getElementById("blkey2").value;
+                key += document.getElementById("blkey3").value;
+                key += document.getElementById("blkey4").value;
+                key += document.getElementById("blkey5").value;
+                key += document.getElementById("blkey6").value;
+                key += document.getElementById("blkey7").value;
+                key += document.getElementById("blkey8").value;
+                if (!validateBitlockerGroup(key.substr(0, 6)) ||
+                    !validateBitlockerGroup(key.substr(6, 6)) ||
+                    !validateBitlockerGroup(key.substr(12, 6)) ||
+                    !validateBitlockerGroup(key.substr(18, 6)) ||
+                    !validateBitlockerGroup(key.substr(24, 6)) ||
+                    !validateBitlockerGroup(key.substr(30, 6)) ||
+                    !validateBitlockerGroup(key.substr(36, 6)) ||
+                    !validateBitlockerGroup(key.substr(42, 6))) {
+                    alert("Bitlocker key is not valid");
+                    return;
                 }
-                outputDiv.innerHTML += id + byteArrayToHexString(shards[i]) + "<br />";
+                key = parseBitlockerKey(key);
+            } else if (type == 'file') {
+                var keyGenOp = window.crypto.subtle.generateKey(
+                    { name: 'AES-GCM', length: 128 }, true,
+                    ["encrypt", "decrypt"]);
+                keyGenOp.then(shardFileKeygenDone);
+                return;
             }
-        } else if (type == 'bitlocker') {
-            for (var i = 0; i < shards.length; i++) {
-                outputDiv.innerHTML += byteArrayToBitlockerKey(shards[i], i + 1) + "<br />";
+            var numShards = document.getElementById("shards").value;
+            var threshold = document.getElementById("threshold").value;
+            var shards = computeShards(key, threshold, numShards);
+
+            if (type == 'hex') {
+                for (var i = 0; i < shards.length; i++) {
+                    var id = i + 1;
+                    if (id < 10) {
+                        id = '0' + id;
+                    }
+                    outputDiv.innerHTML += "<div class='result'>" + id +
+                        byteArrayToHexString(shards[i]) + "</div>";
+                }
+            } else if (type == 'bitlocker') {
+                outputBitlockerShards(outputDiv, shards);
             }
+        } catch (err) {
+            alert(err);
         }
     }
 
@@ -593,14 +693,18 @@ SOFTWARE.
         var type = document.getElementById("combinetype").value;
         var inputDiv = document.getElementById("combineinput");
         inputDiv.innerHTML = '';
+        clearError();
         if (type == 'hex') {
             addHexInput(0);
+            document.getElementById("combinefileinput").style.display = "none";
         } else if (type == 'bitlocker') {
             addBitlockerInput(0);
+            document.getElementById("combinefileinput").style.display = "none";
         } else if (type == 'file') {
             addBitlockerInput(0);
             document.getElementById("combinefileinput").style.display = "block";
         }
+        document.getElementById("combineoutput").innerHTML = '';
     }
 
     function addHexInput(id) {
@@ -640,49 +744,128 @@ SOFTWARE.
         inputDiv.appendChild(document.createElement("br"));
     }
 
+    // Based on http://stackoverflow.com/questions/1053843/get-the-element-with-the-highest-occurrence-in-an-array
+    function findMode(arr) {
+        var modeMap = {};
+        var maxCount = 0;
+        var mode = null;
+        for (var i = 0; i < arr.length; i++) {
+            if (modeMap[arr[i]] == null) {
+                modeMap[arr[i]] = 1;
+            } else {
+                modeMap[arr[i]]++;
+            }
+
+            if (modeMap[arr[i]] > maxCount) {
+                mode = arr[i];
+                maxCount = modeMap[arr[i]];
+            } else if (modeMap[arr[i]] == maxCount) {
+                mode = null;
+            }
+        }
+
+        return mode;
+    }
+
+    function validateBLKGroups(group1, group2, group3, group4) {
+        if (group1.value.length == 6 && group2.value.length == 6 &&
+            group3.value.length == 6 && group4.value.length == 6) {
+            var mode = findMode([group1.value % 11, group2.value % 11,
+                                 group3.value % 11, group4.value % 11]);
+            if (mode == null) {
+                group1.style.color = '#ff0000';
+                group2.style.color = '#ff0000';
+                group3.style.color = '#ff0000';
+                group4.style.color = '#ff0000';
+            } else {
+                if (group1.value % 11 != mode) {
+                    group1.style.color = '#ff0000';
+                } else {
+                    group1.style.color = '#000000';
+                }
+                if (group2.value % 11 != mode) {
+                    group2.style.color = '#ff0000';
+                } else {
+                    group2.style.color = '#000000';
+                }
+                if (group3.value % 11 != mode) {
+                    group3.style.color = '#ff0000';
+                } else {
+                    group3.style.color = '#000000';
+                }
+                if (group4.value % 11 != mode) {
+                    group4.style.color = '#ff0000';
+                } else {
+                    group4.style.color = '#000000';
+                }
+            }
+        }
+    }
+
     function validateBLKCombine(id, i) {
-        var len = document.getElementById("blc_" + id + "_7").value.length;
-        if (i == 7 && len == 6) {
-            var nextInput = document.getElementById("blc_" + (id + 1) + "_0");
-            if (nextInput == null) {
-                addBitlockerInput(id + 1);
+        var inputElement = document.getElementById("blc_" + id + "_" + i);
+        var len = inputElement.value.length;
+
+        if (i < 4) {
+            var group1 = document.getElementById("blc_" + id + "_" + 0);
+            var group2 = document.getElementById("blc_" + id + "_" + 1);
+            var group3 = document.getElementById("blc_" + id + "_" + 2);
+            var group4 = document.getElementById("blc_" + id + "_" + 3);
+            validateBLKGroups(group1, group2, group3, group4);
+        } else {
+            var group5 = document.getElementById("blc_" + id + "_" + 4);
+            var group6 = document.getElementById("blc_" + id + "_" + 5);
+            var group7 = document.getElementById("blc_" + id + "_" + 6);
+            var group8 = document.getElementById("blc_" + id + "_" + 7);
+            validateBLKGroups(group5, group6, group7, group8);
+        }
+
+        if (len == 6) {
+            if (i == 7) {
+                var nextInput = document.getElementById("blc_" + (id + 1) + "_0");
+                if (nextInput == null) {
+                    addBitlockerInput(id + 1);
+                }
             }
         }
     }
 
     function combine() {
-        var type = document.getElementById("combinetype").value;
-        var shard_ids = new Array();
-        var shards = new Array();
-        var input;
-        if (type == 'hex') {
-            for (var i = 0; (input = document.getElementById("hexcombine_" + i)) != null; i++) {
-                if (input.value.length == 0)
-                    continue;
-                shard_ids[i] = parseInt("0x" + input.value.substr(0, 2));
-                shards[i] = parseHexString(input.value.substr(2));
-            }
-            var res = computeCombine(shard_ids, shards);
-            document.getElementById("combineoutput").innerHTML = byteArrayToHexString(res);
-        } else if (type == 'bitlocker' || type == 'file') {
-            var i = 0;
-            while (true) {
-                if (document.getElementById("blc_" + i + "_0") == null)
-                    break;
-                var keystr = '';
-                for (var g = 0; g < 8; g++) {
-                    keystr += document.getElementById("blc_" + i + "_" + g).value;
+        try {
+            var type = document.getElementById("combinetype").value;
+            var shard_ids = new Array();
+            var shards = new Array();
+            var input;
+            clearError();
+            if (type == 'hex') {
+                for (var i = 0; (input = document.getElementById("hexcombine_" + i)) != null; i++) {
+                    if (input.value.length == 0)
+                        continue;
+                    shard_ids[i] = parseInt("0x" + input.value.substr(0, 2));
+                    shards[i] = parseHexString(input.value.substr(2));
                 }
-                if (keystr.length == 0)
-                    break;
-                shard_ids[i] = getBitlockerShardId(keystr);
-                shards[i] = parseBitlockerKey(keystr);
-                i++;
-            }
-            var res = computeCombine(shard_ids, shards);
-            if (type == 'file') {
-                window.crypto.subtle.importKey("raw", res, { name: "AES-GCM" }, false, ["decrypt"]).then(function (key) {
-                    return window.crypto.subtle.decrypt({ name: "AES-GCM", iv: new Uint8Array(window.fileData.slice(0, 16)) },
+                var res = computeCombine(shard_ids, shards);
+                document.getElementById("combineoutput").innerHTML = "<div class='result'>" +
+                    byteArrayToHexString(res) + "</div>";
+            } else if (type == 'bitlocker' || type == 'file') {
+                var i = 0;
+                while (true) {
+                    if (document.getElementById("blc_" + i + "_0") == null)
+                        break;
+                    var keystr = '';
+                    for (var g = 0; g < 8; g++) {
+                        keystr += document.getElementById("blc_" + i + "_" + g).value;
+                    }
+                    if (keystr.length == 0)
+                        break;
+                    shard_ids[i] = getBitlockerShardId(keystr);
+                    shards[i] = parseBitlockerKey(keystr);
+                    i++;
+                }
+                var res = computeCombine(shard_ids, shards);
+                if (type == 'file') {
+                    window.crypto.subtle.importKey("raw", res, { name: "AES-GCM" }, false, ["decrypt"]).then(function (key) {
+                        return window.crypto.subtle.decrypt({ name: "AES-GCM", iv: new Uint8Array(window.fileData.slice(0, 16)) },
                     key, new Uint8Array(window.fileData.slice(16))).then(function (data) {
                         var url = URL.createObjectURL(new Blob([data], { type: "application/octet-stream" }));
                         var dlLink = document.createElement("a");
@@ -693,10 +876,15 @@ SOFTWARE.
                     }, function (err) {
                         document.getElementById("combineoutput").innerHTML = "Can't decrypt file. Incorrect or not enough shards?";
                     });
-                });
-            } else {
-                document.getElementById("combineoutput").innerHTML = byteArrayToBitlockerKey(res, 0);
+                    });
+                } else {
+                    var key = byteArrayToBitlockerKey(res, 0);
+                    document.getElementById("combineoutput").innerHTML = "<div class='result'>" + key.substr(0, 27) +
+                        "<br />" + key.substr(28, 27) + "</div>";
+                }
             }
+        } catch (err) {
+            alert(err);
         }
     }
 
@@ -707,12 +895,6 @@ SOFTWARE.
         selector.appendChild(option);
     }
 
-    function addCryptoOptions(selector) {
-        
-        addOption(selector, "rsa", "RSA signing key");
-        addOption(selector, "dsa", "DSA signing key");
-        addOption(selector, "ecdsa", "ECDSA signing key");
-    }
     </script>
 </head>
 <body>
@@ -727,6 +909,7 @@ SOFTWARE.
         </nav>
     </header>
     <div id="content">
+    <div id="errormsg" class="hidden error"></div>
     <div id="home">
         <p>
         Shattr is a website where you can split your secrets into several shards
@@ -741,13 +924,8 @@ SOFTWARE.
         communications system (e.g. <a href="https://whispersystems.org/">Red Phone</a>) 
         to obtain the shards and recover your Bitlocker key. However, it would be 
         difficult even for a powerful adversary (such as a foreign government) to obtain 
-        enough shards to recover your key.
-        </p>
-        <p>
-        You can also use Shattr to encrypt and decrypt files without the key ever
-        leaving your browser. You can even use it to generate digital signatures
-        that require the cooperation of multiple people. (In fact, the DNS root zone
-        is signed using a similar technique!)
+        enough shards to recover your key. You can also use Shattr to encrypt and decrypt
+        files without the key ever leaving your browser.
         </p>
         <p>
         All of this is done right in your browser, with no data ever being transmitted
@@ -762,7 +940,7 @@ SOFTWARE.
         </p>
         <p>
         Questions? Comments? Concerns? Send them to <a href="https://twitter.com/supersat/">
-        @supersat</a>on Twitter or <a href="mailto:feedback@shattr.it">feedback@shattr.it</a>.
+        @supersat</a> on Twitter or <a href="mailto:feedback@shattr.it">feedback@shattr.it</a>.
         </p>
     </div>
     <div id="shard" class="app">
@@ -776,14 +954,14 @@ SOFTWARE.
                 <input id="key" type="text" maxlength="128" placeholder="Hex key" class="hexkey" />
             </div>
             <div id="shardbitlockerinput" class="hidden keyinput">
-                <input id="blkey1" class="blkey" type="text" maxlength="6" placeholder="000000" />-
-                <input id="blkey2" class="blkey" type="text" maxlength="6" placeholder="000000" />-
-                <input id="blkey3" class="blkey" type="text" maxlength="6" placeholder="000000" />-
-                <input id="blkey4" class="blkey" type="text" maxlength="6" placeholder="000000" /><br />
-                <input id="blkey5" class="blkey" type="text" maxlength="6" placeholder="000000" />-
-                <input id="blkey6" class="blkey" type="text" maxlength="6" placeholder="000000" />-
-                <input id="blkey7" class="blkey" type="text" maxlength="6" placeholder="000000" />-
-                <input id="blkey8" class="blkey" type="text" maxlength="6" placeholder="000000" />
+                <input id="blkey1" class="blkey" type="text" maxlength="6" placeholder="000000" oninput="validateBLKG(1);"/>-
+                <input id="blkey2" class="blkey" type="text" maxlength="6" placeholder="000000" oninput="validateBLKG(2);"/>-
+                <input id="blkey3" class="blkey" type="text" maxlength="6" placeholder="000000" oninput="validateBLKG(3);"/>-
+                <input id="blkey4" class="blkey" type="text" maxlength="6" placeholder="000000" oninput="validateBLKG(4);"/><br />
+                <input id="blkey5" class="blkey" type="text" maxlength="6" placeholder="000000" oninput="validateBLKG(5);"/>-
+                <input id="blkey6" class="blkey" type="text" maxlength="6" placeholder="000000" oninput="validateBLKG(6);"/>-
+                <input id="blkey7" class="blkey" type="text" maxlength="6" placeholder="000000" oninput="validateBLKG(7);"/>-
+                <input id="blkey8" class="blkey" type="text" maxlength="6" placeholder="000000" oninput="validateBLKG(8);"/>
             </div>
             <div id="shardfileinput" class="hidden">
                 Drag your file here!
@@ -881,14 +1059,12 @@ SOFTWARE.
         alert("Your browser does not support secure random number generation " +
               "or other WebCrypto APIs. Shattr.it requires WebCrypto support " +
               "to work.");
-    }
-
-    if (window.crypto.subtle != null) {
-        addCryptoOptions(document.getElementById("shardtype"));
-        addCryptoOptions(document.getElementById("combinetype"));
-    } else {
+    } else if (window.crypto.subtle == null) {
         alert("Your browser does not support the full WebCrypto API. File " +
-              "encryption and signing options are not available.");
+              "encryption is not available.");
+    } else {
+        addOption(document.getElementById("shardtype"), "file", "File");
+        addOption(document.getElementById("combinetype"), "file", "File");
     }
 </script>
 </html>
