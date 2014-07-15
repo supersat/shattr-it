@@ -85,3 +85,9 @@ https://onedrive.live.com/RecoveryKey
 
 9. Re-enable the TPM protector:
    manage-bde -protectors -add c: -tpm
+
+More Information
+----------------
+
+More information on how Shattr works is in these slides presented at the DEFCON 22
+Crypto and Privacy Village: https://shattr.it/talk.pdf.
