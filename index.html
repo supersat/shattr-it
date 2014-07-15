@@ -1,5 +1,28 @@
 <!DOCTYPE html>
 <html>
+<!--
+Licensed under The MIT License (MIT)
+
+Copyright (c) 2014 Karl Koscher
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+-->
 <head>
     <title>Shattr. Distributing Trust.</title>
     <meta name="Keywords" content="Shamir,secret,sharing,Bitlocker,Javascript" />
@@ -13,11 +36,16 @@
             background-color: rgb(96, 96, 96);
         }
         
+        p
+        {
+            margin: 0em 0em 1em 0em;
+        }
+        
         #menu 
         {
             background: -webkit-linear-gradient(top, #fefefe, #ddd);
             background: -moz-linear-gradient(top, #fefefe, #ddd);
-            padding: 15px 15px;
+            padding: 0px 15px;
             font-size: 20pt;
             font-weight: 600;
             text-align: center;
@@ -44,7 +72,13 @@
         
         #content
         {
-            margin: 15px 15px;
+            padding: 15px 15px;
+        }
+        
+        #shardoutput
+        {
+            font-family: monospace;
+            font-weight: bold;
         }
         
         .app
@@ -54,6 +88,11 @@
             font-size: 24pt;
             font-weight: bold;
             text-shadow: 0 1px 3px rgba(0,0,0,.4), 0 0 30px rgba(0,0,0,.075);
+        }
+        
+        .keyinput
+        {
+            margin: 0.25em 0em;
         }
         
         .hidden
@@ -74,11 +113,15 @@
         .hexkey
         {
             width: 700px;
+            font-family: monospace;
+            font-weight: bold;
         }
         
         .blkey 
         {
             width: 3.5em;
+            font-family: monospace;
+            font-weight: bold;
         }
         
         input.button
@@ -113,6 +156,7 @@
     </style>
     <script type="text/javascript">
 
+    ///////////////////////////////////// Galois Field Functions ///////////////////////////////////////
     // We use the Rijndael (AES) finite field, GF(2^8) with reducing polynomial x^8 + x^4 + x^3 + x + 1.
     // These log and anti-log tables are derived from http://www.samiam.org/logtables.txt with a
     // a generator of 3.
@@ -190,7 +234,8 @@
 
         return res;
     }
-
+    
+    ////////////////////////////// Bitlocker Key Processing Functions //////////////////////////////
     // Bitlocker recovery keys are 128 bits in length, broken up into groups of
     // 16 bits. Each group is multiplied by 11 to enable a basic level of error
     // checking. See http://blogs.msdn.com/b/si_team/archive/2006/08/10/694692.aspx
@@ -260,6 +305,7 @@
         return mod[0] * 10 + mod[4];
     }
 
+    ///////////////////////////////// Hex Key Processing Functions /////////////////////////////////
     function hexCharToValue(c) {
         if (c >= 0x30 && c <= 0x39) {
             c -= 0x30;
@@ -304,6 +350,7 @@
         return str;
     }
 
+    //////////////////////// Shamir Secret Sharing Implementation Functions ////////////////////////
     function computeShards(key, threshold, numShards) {
         var coeffs = new Uint8Array(threshold - 1);
         var shards = Array();
@@ -356,6 +403,7 @@
         return output;
     }
 
+    /////////////////////////////////// User Interface Functions ///////////////////////////////////
     function hideChildrenOf(id) {
         var children = document.getElementById(id).childNodes;
         for (var i = 0; i < children.length; i++) {
@@ -372,13 +420,26 @@
     function shardTypeSelected() {
         var type = document.getElementById("shardtype").value;
         hideChildrenOf("shardinputs");
-        if (type == 'hex')
+        if (type == 'hex') {
             document.getElementById("shardhexinput").style.display = 'block';
-        else if (type == 'bitlocker')
+            document.getElementById("key").value = '';
+        } else if (type == 'bitlocker') {
             document.getElementById("shardbitlockerinput").style.display = 'block';
-        else if (type == 'file')
+            document.getElementById("blkey1").value = '';
+            document.getElementById("blkey2").value = '';
+            document.getElementById("blkey3").value = '';
+            document.getElementById("blkey4").value = '';
+            document.getElementById("blkey5").value = '';
+            document.getElementById("blkey6").value = '';
+            document.getElementById("blkey7").value = '';
+            document.getElementById("blkey8").value = '';
+        } else if (type == 'file') {
             document.getElementById("shardfileinput").style.display = 'block';
+            document.getElementById("shardfileinput").innerHTML = 'Drag your file here!';
+            window.fileData = null;
+        }
         document.getElementById("shardoptions").style.display = 'block';
+        document.getElementById("shardoutput").style.display = 'none';
     }
 
     function dragenter(e) {
@@ -436,23 +497,37 @@
         URL.revokeObjectURL(url);
     }
 
+    function shardGeneratedKey(key)
+    {
+        var outputDiv = document.getElementById("shardoutput");
+        var numShards = document.getElementById("shards").value;
+        var threshold = document.getElementById("threshold").value;
+
+        var shards = computeShards(new Uint8Array(key), threshold, numShards);
+
+        for (var i = 0; i < shards.length; i++) {
+            outputDiv.innerHTML += byteArrayToBitlockerKey(shards[i], i + 1) + "<br />";
+        }
+    }
+
     function shardFileKeygenDone(key) {
         var iv = window.crypto.getRandomValues(new Uint8Array(16));
         var encOp = window.crypto.subtle.encrypt({ name: 'AES-GCM', iv: iv }, key,
             new Uint8Array(window.fileData));
         encOp.then(function (data) { shardFileEncryptDone(data, iv); });
         
-        var outputDiv = document.getElementById("shardoutput");
-        var numShards = document.getElementById("shards").value;
-        var threshold = document.getElementById("threshold").value;
-
         var exportOp = window.crypto.subtle.exportKey("raw", key);
-        exportOp.then(function (key) {
-            var shards = computeShards(new Uint8Array(key), threshold, numShards);
-            for (var i = 0; i < shards.length; i++) {
-                outputDiv.innerHTML += byteArrayToBitlockerKey(shards[i], i + 1) + "<br />";
-            }
-        });
+        exportOp.then(shardGeneratedKey);
+    }
+
+    function shardRSAKeygenDone(key) {
+        var exportOp = window.crypto.subtle.exportKey("pkcs8", key.privateKey);
+        exportOp.then(shardGeneratedKey);
+    }
+
+    function shardECDSAKeygenDone(key) {
+        var exportOp = window.crypto.subtle.exportKey("pkcs8", key.privateKey);
+        exportOp.then(shardGeneratedKey);
     }
 
     function shard() {
@@ -479,6 +554,20 @@
                 { name: 'AES-GCM', length: 128 }, true,
                 ["encrypt", "decrypt"]);
             keyGenOp.then(shardFileKeygenDone);
+            return;
+        } else if (type == 'rsa') {
+            var keyGenOp = window.crypto.subtle.generateKey(
+                { name: 'RSASSA-PKCS1-v1_5', modulusLength: 2048,
+                    hash: { name: 'SHA-256' },
+                    publicExponent: parseHexString('010001')
+                }, true, ["sign", "verify"]);
+            keyGenOp.then(shardRSAKeygenDone);
+            return;
+        } else if (type == 'ecdsa') {
+            var keyGenOp = window.crypto.subtle.generateKey(
+                { name: 'ECDSA', namedCurve: 'P-256' }, 
+                true, ["sign", "verify"]);
+            keyGenOp.then(shardECDSAKeygenDone);
             return;
         }
         var numShards = document.getElementById("shards").value;
@@ -610,6 +699,20 @@
             }
         }
     }
+
+    function addOption(selector, value, text) {
+        var option = document.createElement("option");
+        option.value = value;
+        option.appendChild(document.createTextNode(text));
+        selector.appendChild(option);
+    }
+
+    function addCryptoOptions(selector) {
+        
+        addOption(selector, "rsa", "RSA signing key");
+        addOption(selector, "dsa", "DSA signing key");
+        addOption(selector, "ecdsa", "ECDSA signing key");
+    }
     </script>
 </head>
 <body>
@@ -629,7 +732,8 @@
         Shattr is a website where you can split your secrets into several shards
         such that if a certain number of them are combined, the secret can be
         recovered, but otherwise, no information about the secret can be obtained.
-        (More information for crypto nerds can be found here.)
+        (More information for crypto nerds can be found <a href="#"
+        onclick="showPage('tech')">here</a>.)
         </p>
         <p>For example, you can Shattr your Bitlocker recovery key and distribute
         the shards to trusted third parties in several different countries. If you
@@ -649,12 +753,16 @@
         All of this is done right in your browser, with no data ever being transmitted
         over the network. To prevent anyone from tampering with Shattr, always use
         HTTPS! For extra assurance, compare the hash of this HTML file with a known good
-        copy (e.g. the one distributed on the DEFCON 22 CD).
+        copy (e.g. the one distributed on the DEFCON 22 CD). This file will never change.
         </p>
         <p>
-        <b>SHATTR IS CURRENTLY IN BETA.</b> It may change between now and July 15th, 2014.
-        Please break it and report any bugs to 
-        <a href="mailto:feedback@shattr.it">feedback@shattr.it</a>.
+        For more information on how to use Shattr or how it works, check out
+        <a href="https://shattr.it/talk.pdf">these slides</a> from the Shattr talk given
+        at the DEFCON 22 Crypto and Privacy Village.
+        </p>
+        <p>
+        Questions? Comments? Concerns? Send them to <a href="https://twitter.com/supersat/">
+        @supersat</a>on Twitter or <a href="mailto:feedback@shattr.it">feedback@shattr.it</a>.
         </p>
     </div>
     <div id="shard" class="app">
@@ -662,18 +770,12 @@
             <option selected="selected"></option>
             <option value="hex">Hexidecimal key</option>
             <option value="bitlocker">Bitlocker key</option>
-            <option value="file">File</option>
-            <!--
-            <option value="rsa">RSA signing key</option>
-            <option value="dsa">DSA signing key</option>
-            <option value="ecdsa">ECDSA signing key</option>
-            -->
         </select>
         <div id="shardinputs">
-            <div id="shardhexinput" class="hidden">
+            <div id="shardhexinput" class="hidden keyinput">
                 <input id="key" type="text" maxlength="128" placeholder="Hex key" class="hexkey" />
             </div>
-            <div id="shardbitlockerinput" class="hidden">
+            <div id="shardbitlockerinput" class="hidden keyinput">
                 <input id="blkey1" class="blkey" type="text" maxlength="6" placeholder="000000" />-
                 <input id="blkey2" class="blkey" type="text" maxlength="6" placeholder="000000" />-
                 <input id="blkey3" class="blkey" type="text" maxlength="6" placeholder="000000" />-
@@ -716,12 +818,6 @@
             <option selected="selected"></option>
             <option value="hex">Hexidecimal key</option>
             <option value="bitlocker">Bitlocker key</option>
-            <option value="file">File</option>
-            <!--
-            <option value="rsa">RSA signing key</option>
-            <option value="dsa">DSA signing key</option>
-            <option value="ecdsa">ECDSA signing key</option>
-            -->
         </select><br />
         <div id="combineinput">            
         </div>
@@ -776,5 +872,23 @@
     filedrop.addEventListener("dragenter", dragenter, false);
     filedrop.addEventListener("dragover", dragover, false);
     filedrop.addEventListener("drop", combineFileDrop, false);
+
+    // IE11 supports the WebCrypto API, but under a different name.
+    if (window.crypto == null && window.msCrypto != null)
+        window.crypto = window.msCrypto;
+
+    if (window.crypto == null) {
+        alert("Your browser does not support secure random number generation " +
+              "or other WebCrypto APIs. Shattr.it requires WebCrypto support " +
+              "to work.");
+    }
+
+    if (window.crypto.subtle != null) {
+        addCryptoOptions(document.getElementById("shardtype"));
+        addCryptoOptions(document.getElementById("combinetype"));
+    } else {
+        alert("Your browser does not support the full WebCrypto API. File " +
+              "encryption and signing options are not available.");
+    }
 </script>
 </html>
